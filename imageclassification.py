@@ -97,9 +97,11 @@ def calculateBinsByWindow(image):
         
             mask = np.zeros(image.shape[:2],np.uint8)
             mask[begin_row:end_row,begin_col:end_col] = 255
-            kmeans.fit(calculateBins(image,256,mask))
-            result.append(kmeans.cluster_centers_)
+            data =calculateBins(image,256,mask)
+            kmeans.fit(data)
             
+            centroids=kmeans.cluster_centers_
+            result.append(centroids)      
     
     return result
         
