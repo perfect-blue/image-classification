@@ -9,48 +9,58 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
+from urllib.request import urlopen
 
-#mask black and white
-bw_img = cv2.imread('cat-example.jpg',1)
-dimensions=bw_img.shape
-height = bw_img.shape[0]
-width=bw_img.shape[1]
-channels=bw_img.shape[2]
-
-print('Dimensions :',dimensions)
-print('Image Height :',height)
-print('Image Width :',width)
-print('Number of Channels :',channels)
-
-#window
-win_row=4
-win_col=4
-
-for row in range(4):
-    begin_row=int(row*height/4)
-    end_row=int((row+1)*height/4)
+#membaca image dari url
+def readImg(url):
+    resp=urlopen(url)
+    image = np.asarray(bytearray(resp.read()),dtype="uint8")
+    image= cv2.imdecode(image,cv2.IMREAD_COLOR)
     
-    for col in range(4):
-        begin_col=int(col*width/4)
-        end_col=int((col+1)*width/4)
+    return image
+
+    
+#fungsi untuk menghitung historgram
+def countColor(image):
+    dimensions=image.shape
+    height = image.shape[0]
+    width=image.shape[1]
+    channels=image.shape[2]
+
+    print('Dimensions :',dimensions)
+    print('Image Height :',height)
+    print('Image Width :',width)
+    print('Number of Channels :',channels)
+
+    for row in range(4):
+        begin_row=int(row*height/4)
+        end_row=int((row+1)*height/4)
+    
+        for col in range(4):
+            begin_col=int(col*width/4)
+            end_col=int((col+1)*width/4)
         
-        mask = np.zeros(img.shape[:2],np.uint8)
-        mask[begin_row:end_row,begin_col:end_col] = 255
-        masked_img=cv2.bitwise_and(bw_img,bw_img,mask=mask)
+            mask = np.zeros(image.shape[:2],np.uint8)
+            mask[begin_row:end_row,begin_col:end_col] = 255
+            masked_img=cv2.bitwise_and(image,image,mask=mask)
         
-#        plt.subplot(221), plt.imshow(bw_img, 'gray')
-        plt.subplot(221), plt.imshow(masked_img, 'gray')        
+            # plt.subplot(221), plt.imshow(bw_img, 'gray')
+            plt.subplot(221), plt.imshow(masked_img, 'gray')        
   
-        color=('b','g','r')
-        for i, col in enumerate(color):
-            histr=cv2.calcHist([img],[i],mask,[256],[0,256])
-            plt.subplot(222), plt.plot(histr,color=col)
-            plt.xlim([0,256])
+            color=('r','g','b')
+            for i, col in enumerate(color):
+                histr=cv2.calcHist([image],[i],mask,[256],[0,256])
+                plt.subplot(222), plt.plot(histr,color=col)
+                plt.xlim([0,256])
     
-        plt.show()
+            plt.show()    
+    
+#mask black and white
+img = cv2.imread('cat-example.jpg',3)
+img2=readImg('https://farm2.static.flickr.com/1347/930622888_4190f151bc.jpg')
 
-
-
+conv= cv2.cvtColor(img2, cv2.COLOR_RGB2LAB)
+countColor(conv)
 
 
 
