@@ -83,7 +83,8 @@ def most_frequent(List):
     occurence_count = Counter(List)
     return occurence_count.most_common(1)[0][0]
 
-kmeans = KMeans(n_clusters=16,random_state=0)
+
+kmeans = KMeans(n_clusters=20,random_state=0)
 
 #menghitung bins untuk tiap windows
 def calculateBinsByWindow(image):
@@ -105,7 +106,7 @@ def calculateBinsByWindow(image):
         
             mask = np.zeros(image.shape[:2],np.uint8)
             mask[begin_row:end_row,begin_col:end_col] = 255
-            data =calculateBins(image,256,mask)
+            data =calculateBins(image,255,mask)
             kmeans.fit(data)
             
             centroids=kmeans.cluster_centers_
@@ -123,18 +124,20 @@ def feature_selection(centroid,labels):
     #cluster dengan anggota paling banyak
     for i in labels:
         most_common_label.append(most_frequent(i))
+        
+    count=0
     for i in centroid:
-        count=0
         result.append(i[most_common_label[count]])
         count+=1
     
+    print(most_common_label)
     return result
 
 from scipy.spatial import distance
 #menghitung kesamaan fitur dengan euclidean distance
 def feature_similarity(img1,img2):
-    lab1=cv2.cvtColor(img1, cv2.COLOR_RGB2LAB)
-    lab2=cv2.cvtColor(img1, cv2.COLOR_RGB2LAB)
+    lab1=cv2.cvtColor(img1, cv2.COLOR_BGR2LAB)
+    lab2=cv2.cvtColor(img2, cv2.COLOR_BGR2LAB)
     
     r1=calculateBinsByWindow(lab1)
     r2=calculateBinsByWindow(lab2)
@@ -145,15 +148,14 @@ def feature_similarity(img1,img2):
     distances=[]
     for i in range(len(vector1)):
         d = distance.euclidean(vector1[i], vector2[i])
+        print(d)
         distances.append(d)        
     
-    print(distances)
     return [vector1,vector2]
 
-kmeans.predict()
     
-cat1 = cv2.imread('cat-example.jpg',3)
-cat2 = cv2.imread('cat-example.jpg',3)
+cat1 = cv2.imread('hutan.jpg',3)
+cat2 = cv2.imread('hutan2.jpg',3)
 test=feature_similarity(cat1,cat2)
 #countColor(cat1)
 #countColor(cat2)
