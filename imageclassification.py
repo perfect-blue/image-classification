@@ -20,7 +20,7 @@ def readImg(url):
     return image
 
     
-#fungsi untuk menghitung historgram
+#eksplorasi historgram
 def countColor(image):
     dimensions=image.shape
     height = image.shape[0]
@@ -49,14 +49,14 @@ def countColor(image):
   
             color=('b','g','r')
             for i, col in enumerate(color):
-                histr=cv2.calcHist([image],[i],mask,[16],[0,256])
+                histr=cv2.calcHist([image],[i],mask,[256],[0,256])
                 plt.subplot(222), plt.plot(histr,color=col)
-                plt.xlim([0,16])
+                plt.xlim([0,256])
     
             plt.show()    
 
 
-#mengkategorikan pixel menjadi beberapa bins
+#hitung dan normalisasi bins
 def calculateBins(image,bins,mask):
     #menghitung histogram dan jumlah bins
     histB=cv2.calcHist([image],[0],mask,[bins],[0,256])
@@ -64,9 +64,9 @@ def calculateBins(image,bins,mask):
     histR=cv2.calcHist([image],[2],mask,[bins],[0,256])
     
     #normalisasi
-    normB=histB/max(histB)
-    normG=histG/max(histG)
-    normR=histR/max(histR)
+    normB=histB/len(histB)
+    normG=histG/len(histG)
+    normR=histR/len(histR)
     
     #concat jadi satu vektor
     bins_vector=[]
@@ -78,7 +78,14 @@ def calculateBins(image,bins,mask):
     return bins_vector
         
 
+from collections import Counter
+def most_frequent(List):
+    occurence_count = Counter(List)
+    return occurence_count.most_common(1)[0][0]
 
+kmeans = KMeans(n_clusters=16,random_state=0)
+
+#menghitung bins untuk tiap windows
 def calculateBinsByWindow(image):
     height = image.shape[0]
     width=image.shape[1]
@@ -86,7 +93,8 @@ def calculateBinsByWindow(image):
     col_size=4
     
     result=[]
-    kmeans = KMeans(n_clusters=20,random_state=None)
+    label=[]
+
     for row in range(row_size):
         begin_row=int(row*height/row_size)
         end_row=int((row+1)*height/row_size)
@@ -101,21 +109,63 @@ def calculateBinsByWindow(image):
             kmeans.fit(data)
             
             centroids=kmeans.cluster_centers_
+            res=kmeans.labels_
+            
             result.append(centroids)      
-    
-    return result
+            label.append(res)
+            
+    return [result,label]
         
 
+def feature_selection(centroid,labels):
+    most_common_label=[]
+    result=[]
+    #cluster dengan anggota paling banyak
+    for i in labels:
+        most_common_label.append(most_frequent(i))
+    for i in centroid:
+        count=0
+        result.append(i[most_common_label[count]])
+        count+=1
+    
+    return result
+
+from scipy.spatial import distance
+#menghitung kesamaan fitur dengan euclidean distance
+def feature_similarity(img1,img2):
+    lab1=cv2.cvtColor(img1, cv2.COLOR_RGB2LAB)
+    lab2=cv2.cvtColor(img1, cv2.COLOR_RGB2LAB)
+    
+    r1=calculateBinsByWindow(lab1)
+    r2=calculateBinsByWindow(lab2)
+    
+    vector1=feature_selection(r1[0],r1[1])
+    vector2=feature_selection(r2[0],r2[1])
+    
+    distances=[]
+    for i in range(len(vector1)):
+        d = distance.euclidean(vector1[i], vector2[i])
+        distances.append(d)        
+    
+    print(distances)
+    return [vector1,vector2]
+
+kmeans.predict()
+    
+cat1 = cv2.imread('cat-example.jpg',3)
+cat2 = cv2.imread('cat-example.jpg',3)
+test=feature_similarity(cat1,cat2)
+#countColor(cat1)
+#countColor(cat2)
+#img2=readImg('https://farm2.static.flickr.com/1347/930622888_4190f151bc.jpg')
+
+
+
+
+
+
 
     
-img = cv2.imread('cat-example.jpg',3)
-img2=readImg('https://farm2.static.flickr.com/1347/930622888_4190f151bc.jpg')
-
-conv= cv2.cvtColor(img2, cv2.COLOR_RGB2LAB)
-#countColor(conv)
-#calculateBins(conv,20,None)
-cluster_center=calculateBinsByWindow(conv)
-
 
 
 
