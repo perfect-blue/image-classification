@@ -84,7 +84,7 @@ def most_frequent(List):
     return occurence_count.most_common(1)[0][0]
 
 
-kmeans = KMeans(n_clusters=20,random_state=0)
+kmeans = KMeans(n_clusters=20,random_state=20)
 
 #menghitung bins untuk tiap windows
 def calculateBinsByWindow(image):
@@ -130,36 +130,91 @@ def feature_selection(centroid,labels):
         result.append(i[most_common_label[count]])
         count+=1
     
-    print(most_common_label)
+#    print(most_common_label)
     return result
 
-from scipy.spatial import distance
+
 #menghitung kesamaan fitur dengan euclidean distance
-def feature_similarity(img1,img2):
+def feature_similarity(img1):
     lab1=cv2.cvtColor(img1, cv2.COLOR_BGR2LAB)
-    lab2=cv2.cvtColor(img2, cv2.COLOR_BGR2LAB)
+#    lab2=cv2.cvtColor(img2, cv2.COLOR_BGR2LAB)
     
     r1=calculateBinsByWindow(lab1)
-    r2=calculateBinsByWindow(lab2)
+#    r2=calculateBinsByWindow(lab2)
     
     vector1=feature_selection(r1[0],r1[1])
-    vector2=feature_selection(r2[0],r2[1])
+#    vector2=feature_selection(r2[0],r2[1])
     
-    distances=[]
-    for i in range(len(vector1)):
-        d = distance.euclidean(vector1[i], vector2[i])
-        print(d)
-        distances.append(d)        
     
-    return [vector1,vector2]
+#    distances=[]
+#    res=0
+#    for i in range(len(vector1)):
+#        d = distance.euclidean(vector1[i], vector2[i])
+#        res+=d
+#        distances.append(d)        
+#    
+#    
+#    print(vector1)
+#    threshold.append(res)
+    return np.array(vector1).reshape(-1)
+#    return vector1
+
+fitur=[]
+labels=[]
+debug=[]
+
+
+def insert_feature(path,file,label):
+    base_beach=path
+    temp=file
+    for i in range(22):
+        idx=i+1
+        idx_conv=str(idx)
+        name=temp+idx_conv+'.jpg'
+        beach_img = cv2.imread(base_beach+name,3)
+        vector = feature_similarity(beach_img)
+        fitur.append(vector)
+        labels.append(label)
+
 
     
-cat1 = cv2.imread('hutan.jpg',3)
-cat2 = cv2.imread('hutan2.jpg',3)
-test=feature_similarity(cat1,cat2)
-#countColor(cat1)
-#countColor(cat2)
-#img2=readImg('https://farm2.static.flickr.com/1347/930622888_4190f151bc.jpg')
+cat1 = cv2.imread('pantai-test.jpg',3)
+cat2 = cv2.imread('piaget-2.jpg',3)
+#test=feature_similarity(cat1)
+insert_feature("beach/","pantai","pantai")
+print(np.array(fitur).shape)
+
+#debug=[]
+#debug.append([1,2,3])
+#debug.append([1,2,3])
+#print(np.array(debug).shape)
+insert_feature("hutan/","hutan","hutan")
+
+##classification
+from sklearn import preprocessing
+#
+le=preprocessing.LabelEncoder()
+img_en=le.fit_transform(labels)
+arr_en=np.array(img_en).reshape(-1)
+
+#KNN
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+
+model = KNeighborsClassifier(n_neighbors=6)
+X_train, X_test, y_train, y_test = train_test_split(fitur, labels, test_size=0.3)
+model.fit(fitur,labels)
+
+#print(model.predict(X_test))
+#
+test=[]
+pr=feature_similarity(cat1)
+test.append(np.array(pr).reshape(-1))
+
+#print(arr_pr.shape)
+##arr_pr=np.array(pr).reshape(-1,1)
+predicted=model.predict(test)
+print(predicted)
 
 
 
